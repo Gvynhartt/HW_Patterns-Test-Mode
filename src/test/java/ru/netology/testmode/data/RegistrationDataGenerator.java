@@ -57,17 +57,13 @@ public class RegistrationDataGenerator {
         }
 
         public static RegistrationData generateUser(String statusConfig) { /** сюда записываются все поля, передаётся статус */
-            RegistrationData newUserEntry = new RegistrationData();
-            newUserEntry.login = generateLogin();
-            newUserEntry.password = generatePassword();
-            newUserEntry.status = statusConfig;
+            RegistrationData newUserEntry = new RegistrationData(generateLogin(), generatePassword(), statusConfig);
             return newUserEntry;
         }
 
         public static RegistrationData registerNewUser(String statusConfig) { /** и здесь, наконец, отправляем запрос со всем нужным,
          вызвав метод с запросом и передав статус в параметре */
-            RegistrationData reggedUser = new RegistrationData();
-            reggedUser = generateUser(statusConfig);
+            RegistrationData reggedUser = generateUser(statusConfig);
             sendRequest(reggedUser);
             return reggedUser;
         }

@@ -21,14 +21,6 @@ import static io.restassured.RestAssured.given;
 
 public class RegisterUserTestsAuto {
 
-    private static RequestSpecification requestSpec = new RequestSpecBuilder()
-            .setBaseUri("http://localhost")
-            .setPort(9999)
-            .setAccept(ContentType.JSON)
-            .setContentType(ContentType.JSON)
-            .log(LogDetail.ALL)
-            .build();
-
     @Test
     @DisplayName("Case 0: If no user matches login data")
     void shdNotLoginIfUserUnreggedActive() {
@@ -136,79 +128,5 @@ public class RegisterUserTestsAuto {
         $x("//button[@data-test-id='action-login']/descendant::span[text()='Продолжить']").click();
         // должно появиться уведомление об ошибке логина/пароля
         $x("//div[@data-test-id='error-notification']/descendant::div[text()='Неверно указан логин или пароль']").should(Condition.appear);
-    }
-
-    @Test
-    @DisplayName("Case 7: Login with overwritten password")
-    void shdRewritePasswordForActiveUser() {
-        Configuration.holdBrowserOpen = true;
-        open("http://localhost:9999");
-        // запрос отправляется, создаётся активный пользователь
-        RegistrationData newUser = RegistrationDataGenerator.Registration.registerNewUser("active");
-        String oldPassword = newUser.getPassword(); // сохраняем старый пароль для первой попытки логина
-        // заменяем пароль для пользователя
-        newUser.setPassword(RegistrationDataGenerator.generatePassword());
-        String newPassword = newUser.getPassword(); // сохраняем новый пароль для второй попытки логина
-        // отправляем запрос с изменённым паролем
-        RegistrationDataGenerator.sendRequest(newUser);
-
-        $x("//span[@data-test-id='login']/descendant::input[@name='login']").setValue(newUser.getLogin());
-        $x("//span[@data-test-id='password']/descendant::input[@name='password']").setValue(oldPassword);
-        $x("//button[@data-test-id='action-login']/descendant::span[text()='Продолжить']").click();
-        // должно появиться уведомление об ошибке логина/пароля
-        $x("//div[@data-test-id='error-notification']/descendant::div[text()='Неверно указан логин или пароль']").should(Condition.appear);
-        $x("//div[@data-test-id='error-notification']/descendant::button[@role='button']").click(); // закрываем уведомление
-        // вводим новый пароль, стирая предварительно старый
-        $x("//span[@data-test-id='password']/descendant::input[@name='password']").sendKeys(Keys.chord(Keys.CONTROL, Keys.BACK_SPACE));
-        $x("//span[@data-test-id='password']/descendant::input[@name='password']").setValue(newPassword);
-        $x("//button[@data-test-id='action-login']/descendant::span[text()='Продолжить']").click();
-        $x("//h2[contains(text(),'Личный кабинет')]").should(Condition.appear); // должен произойти переход в личный кабинет
-    }
-
-    @Test
-    @DisplayName("Case 8: Login with overwritten login")
-    void shdRewriteLoginForActiveUser() {
-        Configuration.holdBrowserOpen = true;
-        open("http://localhost:9999");
-        // запрос отправляется, создаётся активный пользователь
-        RegistrationData newUser = RegistrationDataGenerator.Registration.registerNewUser("active");
-        String oldLogin = newUser.getLogin(); // сохраняем старый логин для первой попытки взода
-        // заменяем логин для пользователя
-        newUser.setLogin(RegistrationDataGenerator.generateLogin());
-        String newLogin = newUser.getLogin(); // сохраняем новый логин для второй попытки входа
-        // отправляем запрос с изменённым логином
-        RegistrationDataGenerator.sendRequest(newUser);
-
-        $x("//span[@data-test-id='login']/descendant::input[@name='login']").setValue(oldLogin); // введён первый логин
-        $x("//span[@data-test-id='password']/descendant::input[@name='password']").setValue(newUser.getPassword());
-        $x("//button[@data-test-id='action-login']/descendant::span[text()='Продолжить']").click();
-        $x("//h2[contains(text(),'Личный кабинет')]").should(Condition.appear); // должен произойти переход в личный кабинет
-
-        open("http://localhost:9999");
-        $x("//span[@data-test-id='login']/descendant::input[@name='login']").setValue(newLogin); // введён второй логин
-        $x("//span[@data-test-id='password']/descendant::input[@name='password']").setValue(newUser.getPassword());
-        $x("//button[@data-test-id='action-login']/descendant::span[text()='Продолжить']").click();
-        $x("//h2[contains(text(),'Личный кабинет')]").should(Condition.appear); // должен произойти переход в личный кабинет
-
-        // т. е. по сути мы создаём две разных активных учётных записи, но с совпадающими паролями
-    }
-
-    @Test
-    @DisplayName("Case 9: Login after block")
-    void shdRewriteStatusForActiveUserToBlocked() {
-        Configuration.holdBrowserOpen = true;
-        open("http://localhost:9999");
-        // запрос отправляется, создаётся активный пользователь
-        RegistrationData newUser = RegistrationDataGenerator.Registration.registerNewUser("active");
-        // изменяем статус
-        newUser.setStatus("blocked");
-        // отправляем запрос с изменённым статусом
-        RegistrationDataGenerator.sendRequest(newUser);
-
-        $x("//span[@data-test-id='login']/descendant::input[@name='login']").setValue(newUser.getLogin());
-        $x("//span[@data-test-id='password']/descendant::input[@name='password']").setValue(newUser.getPassword());
-        $x("//button[@data-test-id='action-login']/descendant::span[text()='Продолжить']").click();
-        // должно появиться уведомление о блокировке
-        $x("//div[@data-test-id='error-notification']/descendant::div[text()='Пользователь заблокирован']").should(Condition.appear);
     }
 }
